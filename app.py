@@ -6,6 +6,7 @@ from components import navbar
 import pandas as pd
 from pages import dashboard,clients,technicians,tasks,orders
 import model
+from datetime import datetime
 
 engine = create_engine('sqlite:///test.db', echo=True)
 
@@ -177,6 +178,96 @@ def register_tasks(n_clicks, name,service):
         tasks.df = pd.read_sql_query(q,con=engine)
         return True, children, tasks.df.to_dict('records')
     return False, no_update, tasks.df.to_dict('records')
+
+
+
+@app.callback(
+    Output("orders_modal", "is_open"),
+    Output("orders_modal", "children"),
+    Output("orders-list","data"),
+    Input("add-order-button", "n_clicks"),
+    State("select-task-dropdown", "value"),
+    State("select-client-dropdown", "value"),
+    State("select-tech-dropdown", "value"),
+)
+def add_order(n_clicks, task,client,tech):
+    
+
+
+
+
+    if n_clicks:
+        children = dbc.Container(
+        [
+            dbc.ModalHeader(
+                "NOTICE!"
+            ),
+            dbc.ModalBody(
+                [
+                    html.H3(f"New order request has been registered."),
+                    html.P("Press ESC or click outside to close.")
+                   
+                ]
+            ), 
+        ],
+        )
+    
+        q = """select max(id) from orders"""
+        df = pd.read_sql_query(q,con=engine)
+        j = df.values[0][0]
+        new_order= model.Orders(id=(int(j)+1),task_id=task,client_id=client,tech_id=tech,status_id=2)
+        Session = sessionmaker(bind=engine)
+        with Session() as session:
+            session.add(new_order)
+            session.commit()
+    
+    
+        q = """SELECT orders.id AS orders_id, orders.added_datetime AS orders_added_datetime, orders.etc_datetime AS orders_etc_datetime, orders.started_datetime AS orders_started_datetime, orders.closed_datetime AS orders_closed_datetime, orders.client_id AS orders_client_id, orders.task_id AS orders_task_id, orders.status_id AS orders_status_id, orders.tech_id AS orders_tech_id, status.id AS status_id, status.name AS status_name, tasks.id AS tasks_id, tasks.name AS tasks_name, tasks.service_type AS tasks_service_type, clients.id AS clients_id, clients.name AS clients_name, technicians.id AS technicians_id, technicians.name AS technicians_name 
+        FROM orders, status, tasks, clients, technicians 
+        WHERE orders.status_id = status.id AND orders.task_id = tasks.id AND orders.client_id = clients.id AND orders.tech_id = technicians.id"""
+        df = pd.read_sql_query(q,con=engine)
+        df1 = df[['tasks_service_type','orders_id']]
+        df1 = df1.apply(lambda x:x['tasks_service_type']+str(x['orders_id']).zfill(3),axis=1)
+        df2 = df[['tasks_name', 'orders_added_datetime', 'orders_etc_datetime',
+               'orders_started_datetime', 'orders_closed_datetime',
+                'clients_name',  'technicians_name', 
+               'status_name' ]]
+        final_df=pd.concat([df1,df2],axis=1)
+        final_df.columns=['id','task', 'added', 'etc',
+               'started', 'closed',
+                'client',  'technician', 
+               'status']
+        final_df = final_df.sort_values('status',ascending=False)
+
+        final_df['added'] = final_df['added'].apply(lambda x: pd.to_datetime(x))
+        final_df['etc'] = final_df['etc'].apply(lambda x: pd.to_datetime(x))
+        final_df['started'] = final_df['started'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
+        final_df['closed'] = final_df['closed'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
+        return True, children, final_df.to_dict('records')
+        
+    q = """SELECT orders.id AS orders_id, orders.added_datetime AS orders_added_datetime, orders.etc_datetime AS orders_etc_datetime, orders.started_datetime AS orders_started_datetime, orders.closed_datetime AS orders_closed_datetime, orders.client_id AS orders_client_id, orders.task_id AS orders_task_id, orders.status_id AS orders_status_id, orders.tech_id AS orders_tech_id, status.id AS status_id, status.name AS status_name, tasks.id AS tasks_id, tasks.name AS tasks_name, tasks.service_type AS tasks_service_type, clients.id AS clients_id, clients.name AS clients_name, technicians.id AS technicians_id, technicians.name AS technicians_name 
+    FROM orders, status, tasks, clients, technicians 
+    WHERE orders.status_id = status.id AND orders.task_id = tasks.id AND orders.client_id = clients.id AND orders.tech_id = technicians.id"""
+    df = pd.read_sql_query(q,con=engine)
+    df1 = df[['tasks_service_type','orders_id']]
+    df1 = df1.apply(lambda x:x['tasks_service_type']+str(x['orders_id']).zfill(3),axis=1)
+    df2 = df[['tasks_name', 'orders_added_datetime', 'orders_etc_datetime',
+           'orders_started_datetime', 'orders_closed_datetime',
+            'clients_name',  'technicians_name', 
+           'status_name' ]]
+    final_df=pd.concat([df1,df2],axis=1)
+    final_df.columns=['id','task', 'added', 'etc',
+           'started', 'closed',
+            'client',  'technician', 
+           'status']
+    final_df = final_df.sort_values('status',ascending=False)
+
+    final_df['added'] = final_df['added'].apply(lambda x: pd.to_datetime(x))
+    final_df['etc'] = final_df['etc'].apply(lambda x: pd.to_datetime(x))
+    final_df['started'] = final_df['started'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
+    final_df['closed'] = final_df['closed'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")   
+    return False, no_update, final_df.to_dict('records')
+
 
 # Run the app on localhost:8050
 if __name__ == '__main__':

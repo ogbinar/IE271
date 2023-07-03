@@ -25,10 +25,10 @@ final_df.columns=['id','tasks_service_type','task', 'added', 'etc',
        'status']
 final_df = final_df.sort_values('status',ascending=False)
 
-final_df['added'] = final_df['added'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-final_df['etc'] = final_df['etc'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-final_df['started'] = final_df['started'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f') if(x is not None) else " ")
-final_df['closed'] = final_df['closed'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f') if(x is not None) else " ")
+final_df['added'] = final_df['added'].apply(lambda x: pd.to_datetime(x))
+final_df['etc'] = final_df['etc'].apply(lambda x: pd.to_datetime(x))
+final_df['started'] = final_df['started'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
+final_df['closed'] = final_df['closed'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
 
 i=final_df.shape[0]
 

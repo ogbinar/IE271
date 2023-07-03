@@ -23,24 +23,28 @@ final_df.columns=['id','task', 'added', 'etc',
        'status']
 final_df = final_df.sort_values('status',ascending=False)
 
-final_df['added'] = final_df['added'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-final_df['etc'] = final_df['etc'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-final_df['started'] = final_df['started'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f') if(x is not None) else " ")
-final_df['closed'] = final_df['closed'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f') if(x is not None) else " ")
+final_df['added'] = final_df['added'].apply(lambda x: pd.to_datetime(x))
+final_df['etc'] = final_df['etc'].apply(lambda x: pd.to_datetime(x))
+final_df['started'] = final_df['started'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
+final_df['closed'] = final_df['closed'].apply(lambda x: pd.to_datetime(x) if(x is not None) else " ")
 
 
 
 q = """SELECT tasks.id, tasks.name, tasks.service_type from tasks order by tasks.id"""
 df = pd.read_sql_query(q,con=engine)
-tasks = df['name'].values
+#tasks = df['name'].values
+tasks = {j:i for i,j in df[['name','id']].values}
+print(tasks)
 
 q = """SELECT clients.id, clients.name from clients order by clients.id"""
 df = pd.read_sql_query(q,con=engine)
-clients = df['name'].values
+#clients = df['name'].values
+clients = {j:i for i,j in df[['name','id']].values}
 
 q = """SELECT technicians.id, technicians.name from technicians order by technicians.id"""
 df = pd.read_sql_query(q,con=engine)
-technicians = df['name'].values
+#technicians = df['name'].values
+technicians = {j:i for i,j in df[['name','id']].values}
 
 layout = html.Center(html.Div([
     html.H1('EPDC Services Management'),
@@ -49,9 +53,9 @@ layout = html.Center(html.Div([
     
     html.Div([
     dbc.Row([
-    dbc.Col(dcc.Dropdown(tasks, 'Select Task', id='select-task-dropdown')),
-    dbc.Col(dcc.Dropdown(clients, 'Select Client', id='select-client-dropdown')),
-    dbc.Col(dcc.Dropdown(technicians, 'Select Technician', id='select-tech-dropdown')),
+    dbc.Col(dcc.Dropdown(tasks, '',  id='select-task-dropdown',placeholder="Select Task")),
+    dbc.Col(dcc.Dropdown(clients, '', id='select-client-dropdown',placeholder="Select Client")),
+    dbc.Col(dcc.Dropdown(technicians, '', id='select-tech-dropdown',placeholder="Select Technician")),
     dbc.Col(dbc.Button("Schedule Order Request", id="add-order-button", color="primary"))])
     
       ]),
@@ -60,6 +64,11 @@ layout = html.Center(html.Div([
     dbc.Col([dash_table.DataTable(final_df.to_dict('records'), [{"name": i, "id": i} for i in final_df.columns],filter_action="native", sort_action="native",page_size=5,fill_width=False,id='orders-list')])
     ,
     dbc.Col([])
+    ,
+        dbc.Modal(
+            id="orders_modal",
+            size="lg",is_open=False,)
+    
     ]
     ))
 

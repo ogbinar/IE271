@@ -3,6 +3,7 @@ from sqlalchemy import Column, Date, Integer, String,DateTime,Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from datetime import datetime 
 
 engine = create_engine('sqlite:///test.db', echo=True)
 Base = declarative_base()
@@ -52,14 +53,14 @@ class Orders(Base):
     id = Column('id', Integer, primary_key=True)
 
 
-    added_datetime = Column('added_datetime',DateTime)
-    etc_datetime = Column('etc_datetime',DateTime)
+    added_datetime = Column('added_datetime',DateTime,server_default=func.now())
+    etc_datetime = Column('etc_datetime',DateTime, nullable=True)
     started_datetime = Column('started_datetime',DateTime, nullable=True)
     closed_datetime = Column('closed_datetime',DateTime, nullable=True)
 
     client_id = Column('client_id', Integer, ForeignKey('clients.id'), primary_key=True)
     task_id = Column('task_id', Integer, ForeignKey('tasks.id'), primary_key=True)
-    status_id = Column('status_id', Integer, ForeignKey('status.id'), primary_key=True)
+    status_id = Column('status_id', Integer, ForeignKey('status.id'), primary_key=True,default=2)
     tech_id = Column('tech_id', Integer, ForeignKey('technicians.id'), primary_key=True)
 
     clients = relationship(Clients)
