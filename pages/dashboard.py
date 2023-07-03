@@ -62,7 +62,7 @@ tech_fig.update_layout(showlegend=False)
 
 # Define the page layout
 layout = dbc.Container([
-    dbc.Row([html.H1('EPDC Service Orders Dashboard')]),
+    dbc.Row([html.Img(src="assets/logo.png",height=50,width=50),html.H1('EPDC Service Orders Dashboard')]),
     dbc.Row([
         dbc.Col([]),
         html.H2(f'Total Orders: {i}')]),
